@@ -19,6 +19,7 @@ if ($#ARGV < 3) {
 	print "Usage: $0 <ip/hostname> <user> <pass> <command> [command extra options]\n";
 	print "  commands:\n";
 	print "  - wr-mem [options: none] - write memory (save configuration)\n";
+	print "  - reset [options: none] - reboot switch\n";
 	print "  - set-log-host [options: <syslog IP>] - set remote logging host with all default logging settings\n";
 	exit(1);
 }
@@ -38,7 +39,7 @@ unless ($host =~ /^[0-9a-zA-Z\.\-]+$/) {
 }
 
 ### COMMAND:
-if ($command eq 'wr-mem') {
+if ($command eq 'wr-mem' || $command eq 'reset') {
 	# no valdiation needed
 } elsif ($command eq 'set-log-host') {
 	if ($#ARGV != 4 || !($ARGV[4] =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
@@ -94,6 +95,13 @@ if ($command eq 'wr-mem') {
 	} else {
 		print RED,"REQ COMMAND ERROR: ",RESET, $resp->status_line,"\n";
 	}
+} elsif ($command eq 'reset') {
+	$req = POST 'http://'.$host.'/htdocs/lua/ajax/sys_reset_ajax.lua?reset=1', [];
+
+	$ua->timeout(2);
+	$ua->request( $req );
+	print GREEN, "REQ SENT, NO RESPONSE EXPECTED",RESET,"\n";
+	exit(0);
 } elsif ($command eq 'set-log-host') {
 	$req = POST 'http://'.$host.'/htdocs/pages/base/log_cfg.lsp', [
 		'admin_status_buff_sel[]' => 'enabled',
